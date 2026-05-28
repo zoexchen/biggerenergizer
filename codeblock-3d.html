@@ -1,0 +1,517 @@
+<!-- ============================================================
+  BIGGER ENERGIZER  Cinematic 3D Scroll Section (Three.js)
+  Drop into a Squarespace Code Block. Test in PUBLISHED VIEW.
+============================================================ -->
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
+
+  .be3d-wrap, .be3d-wrap * { box-sizing: border-box; }
+
+  .be3d-wrap {
+    position: relative;
+    width: 100%;
+    height: 500vh;
+    background: #000;
+    font-family: 'Space Grotesk', -apple-system, system-ui, sans-serif;
+    color: #fff;
+    overflow: visible;
+  }
+  .be3d-sticky {
+    position: sticky;
+    top: 0;
+    width: 100%;
+    height: 100vh;
+    overflow: hidden;
+    background: radial-gradient(ellipse at 50% 60%, #050810 0%, #000 75%);
+  }
+  .be3d-canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+
+  /* Top + bottom vignette */
+  .be3d-vignette-top, .be3d-vignette-bottom {
+    position: absolute; left: 0; right: 0;
+    pointer-events: none;
+    z-index: 2;
+  }
+  .be3d-vignette-top    { top: 0;    height: 20%; background: linear-gradient(to bottom, rgba(0,0,0,0.65), rgba(0,0,0,0)); }
+  .be3d-vignette-bottom { bottom: 0; height: 55%; background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.45) 45%, rgba(0,0,0,0) 100%); }
+
+  /* Text overlay (acts) */
+  .be3d-act {
+    position: absolute;
+    left: 0; right: 0; bottom: 10vh;
+    padding: 0 8vw;
+    opacity: 0;
+    transform: translateY(30px);
+    will-change: opacity, transform;
+    pointer-events: none;
+    z-index: 3;
+  }
+  .be3d-eyebrow {
+    font-size: clamp(11px, 1vw, 14px);
+    font-weight: 500;
+    letter-spacing: 0.35em;
+    text-transform: uppercase;
+    color: #A4D147;
+    margin: 0 0 18px 0;
+  }
+  .be3d-headline {
+    font-size: clamp(34px, 5.4vw, 84px);
+    font-weight: 500;
+    letter-spacing: -0.025em;
+    line-height: 1.02;
+    margin: 0 0 22px 0;
+    max-width: 18ch;
+  }
+  .be3d-sub {
+    font-size: clamp(15px, 1.4vw, 22px);
+    font-weight: 300;
+    line-height: 1.45;
+    color: rgba(255,255,255,0.80);
+    margin: 0;
+    max-width: 48ch;
+  }
+  .be3d-chips { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 22px; }
+  .be3d-chip {
+    font-size: clamp(12px, 0.9vw, 14px);
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    padding: 9px 16px;
+    border: 1px solid rgba(255,255,255,0.22);
+    border-radius: 999px;
+    background: rgba(255,255,255,0.04);
+    backdrop-filter: blur(8px);
+  }
+  .be3d-chip strong { color: #A4D147; font-weight: 600; margin-right: 6px; }
+
+  .be3d-cta-row { margin-top: 28px; display: flex; gap: 14px; flex-wrap: wrap; pointer-events: auto; }
+  .be3d-cta {
+    display: inline-block;
+    padding: 14px 28px;
+    background: #A4D147;
+    color: #0A0A0A;
+    text-decoration: none;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    font-size: clamp(14px, 1.1vw, 16px);
+    border-radius: 999px;
+    transition: transform .25s ease, background .25s ease;
+  }
+  .be3d-cta:hover { transform: translateY(-2px); background: #B8E055; }
+  .be3d-cta--ghost {
+    background: transparent; color: #fff;
+    border: 1px solid rgba(255,255,255,0.35);
+  }
+  .be3d-cta--ghost:hover { background: rgba(255,255,255,0.08); }
+
+  .be3d-progress {
+    position: absolute; left: 0; bottom: 0;
+    height: 2px; width: 0%;
+    background: #A4D147;
+    z-index: 4;
+    transition: width 0.1s linear;
+  }
+
+  .be3d-hint {
+    position: absolute;
+    right: 5vw; top: 50%;
+    color: rgba(255,255,255,0.45);
+    font-size: 10px;
+    letter-spacing: 0.4em;
+    writing-mode: vertical-rl;
+    transform: translateY(-50%);
+    z-index: 3;
+    pointer-events: none;
+    animation: be3dpulse 2.4s ease-in-out infinite;
+  }
+  @keyframes be3dpulse {
+    0%,100% { opacity: 0.25; transform: translateY(calc(-50% - 4px)); }
+    50%     { opacity: 0.85; transform: translateY(calc(-50% + 8px)); }
+  }
+
+  .be3d-loader {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    background: #000; z-index: 5;
+    transition: opacity .6s ease;
+  }
+  .be3d-loader.is-ready { opacity: 0; pointer-events: none; }
+  .be3d-loader-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: #A4D147;
+    animation: be3ddot 1.2s ease-in-out infinite;
+  }
+  @keyframes be3ddot { 0%,100%{opacity:0.3} 50%{opacity:1} }
+
+  @media (max-width: 768px) {
+    .be3d-wrap { height: 450vh; }
+    .be3d-act  { bottom: 11vh; padding: 0 6vw; }
+    .be3d-headline { max-width: 14ch; }
+    .be3d-hint { display: none; }
+  }
+</style>
+
+<section class="be3d-wrap" aria-label="Bigger Energizer chassis 3D showcase">
+  <div class="be3d-sticky">
+    <canvas class="be3d-canvas"></canvas>
+
+    <div class="be3d-vignette-top"></div>
+    <div class="be3d-vignette-bottom"></div>
+
+    <div class="be3d-act" data-i="0">
+      <p class="be3d-eyebrow">Proven Hardware</p>
+      <h2 class="be3d-headline">An Australian-grade BEV chassis.</h2>
+      <p class="be3d-sub">Production-ready. Engineered for council fleets, road-tested in the real world.</p>
+    </div>
+
+    <div class="be3d-act" data-i="1">
+      <p class="be3d-eyebrow">Purpose-Built</p>
+      <h2 class="be3d-headline">Battery architecture, reimagined.</h2>
+      <p class="be3d-sub">Designed around CATL cells from day one &mdash; not bolted on. Zero hydraulic interference.</p>
+    </div>
+
+    <div class="be3d-act" data-i="2">
+      <p class="be3d-eyebrow">The Drivetrain</p>
+      <h2 class="be3d-headline">Dual 230 kW e-axles.</h2>
+      <p class="be3d-sub">Axial-flux motors. Class-leading power density. Regenerative braking on every stop.</p>
+      <div class="be3d-chips">
+        <span class="be3d-chip"><strong>98%</strong>energy efficiency</span>
+        <span class="be3d-chip"><strong>2 &times; 230 kW</strong>e-axle output</span>
+        <span class="be3d-chip"><strong>100 km+</strong>duty range</span>
+      </div>
+    </div>
+
+    <div class="be3d-act" data-i="3">
+      <p class="be3d-eyebrow">Vehicle-to-Grid</p>
+      <h2 class="be3d-headline">Your truck.<br>The grid&rsquo;s battery.</h2>
+      <p class="be3d-sub">V2G-ready at 250 kW. Discharge during peak, charge overnight. Fleet downtime becomes revenue.</p>
+    </div>
+
+    <div class="be3d-act" data-i="4">
+      <p class="be3d-eyebrow">2026 Council Trials</p>
+      <h2 class="be3d-headline">Reserve a demonstration unit.</h2>
+      <p class="be3d-sub">Now taking expressions of interest from forward-looking Australian councils.</p>
+      <div class="be3d-cta-row">
+        <a class="be3d-cta" href="/contact">Request a Demo</a>
+        <a class="be3d-cta be3d-cta--ghost" href="/about">Talk to Engineering</a>
+      </div>
+    </div>
+
+    <span class="be3d-hint">Scroll</span>
+    <div class="be3d-progress"></div>
+    <div class="be3d-loader"><div class="be3d-loader-dot"></div></div>
+  </div>
+</section>
+
+<script type="importmap">
+{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js" } }
+</script>
+<script type="module">
+import * as THREE from 'three';
+
+(function(){
+  if (window.__be3dInit) return; window.__be3dInit = true;
+
+  const BASE = 'https://zoexchen.github.io/biggerenergizer/cutouts/';
+  const TRUCKS = [
+    BASE + '01-front.webp',
+    BASE + '02-front-quarter.webp',
+    BASE + '03-side.webp',
+    BASE + '04-rear.webp',
+    BASE + '05-rear-quarter.webp'
+  ];
+
+  const ACT_RANGES = [
+    { in: 0.000, hold: 0.040, out: 0.190 },
+    { in: 0.215, hold: 0.255, out: 0.390 },
+    { in: 0.415, hold: 0.455, out: 0.590 },
+    { in: 0.615, hold: 0.655, out: 0.790 },
+    { in: 0.815, hold: 0.855, out: 1.001 }
+  ];
+
+  const wrap    = document.querySelector('.be3d-wrap');
+  const sticky  = wrap.querySelector('.be3d-sticky');
+  const canvas  = wrap.querySelector('.be3d-canvas');
+  const acts    = wrap.querySelectorAll('.be3d-act');
+  const loader  = wrap.querySelector('.be3d-loader');
+  const progEl  = wrap.querySelector('.be3d-progress');
+
+  // ---- Three.js setup ----
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
+
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(34, 1, 0.1, 100);
+  camera.position.set(0, 0, 6);
+
+  // Load all truck textures
+  const texLoader = new THREE.TextureLoader();
+  const textures = TRUCKS.map(function(u){
+    const t = texLoader.load(u);
+    t.colorSpace = THREE.SRGBColorSpace;
+    t.anisotropy = 8;
+    return t;
+  });
+
+  // Stacked truck planes for crossfade
+  function makePlane(){
+    const geo = new THREE.PlaneGeometry(1, 1, 1, 1);
+    const mat = new THREE.MeshBasicMaterial({ transparent: true, depthWrite: false, opacity: 1 });
+    const m = new THREE.Mesh(geo, mat);
+    return m;
+  }
+  const planeA = makePlane();
+  const planeB = makePlane();
+  planeA.material.map = textures[0];
+  planeB.material.map = textures[1];
+  planeB.material.opacity = 0;
+  scene.add(planeA, planeB);
+
+  function sizePlane(plane, tex){
+    if (!tex.image || !tex.image.width) return;
+    const ar = tex.image.width / tex.image.height;
+    // Fit into a 4.4w x 2.4h box
+    const MAX_W = 4.4, MAX_H = 2.4;
+    let w, h;
+    if (ar > MAX_W / MAX_H) { w = MAX_W; h = w / ar; }
+    else                    { h = MAX_H; w = h * ar; }
+    plane.scale.set(w, h, 1);
+  }
+
+  // Soft glow disc behind truck
+  const glowMat = new THREE.ShaderMaterial({
+    transparent: true,
+    depthWrite: false,
+    uniforms: {
+      uColor:     { value: new THREE.Color(0xA4D147) },
+      uIntensity: { value: 0.35 }
+    },
+    vertexShader:
+      'varying vec2 vUv;' +
+      'void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+    fragmentShader:
+      'varying vec2 vUv;' +
+      'uniform vec3 uColor;' +
+      'uniform float uIntensity;' +
+      'void main(){' +
+        'float d = distance(vUv, vec2(0.5));' +
+        'float a = pow(smoothstep(0.5, 0.05, d), 1.6) * uIntensity;' +
+        'gl_FragColor = vec4(uColor * a, a);' +
+      '}'
+  });
+  const glow = new THREE.Mesh(new THREE.CircleGeometry(3.4, 64), glowMat);
+  glow.position.z = -0.6;
+  scene.add(glow);
+
+  // Star particles
+  const N = 900;
+  const pos = new Float32Array(N * 3);
+  const sizes = new Float32Array(N);
+  for (let i = 0; i < N; i++){
+    const r     = 8 + Math.random() * 22;
+    const theta = Math.random() * Math.PI * 2;
+    const y     = (Math.random() - 0.5) * 14;
+    pos[i*3]   = r * Math.cos(theta);
+    pos[i*3+1] = y;
+    pos[i*3+2] = r * Math.sin(theta) - 4;
+    sizes[i]   = Math.random() * 0.04 + 0.012;
+  }
+  const pGeo = new THREE.BufferGeometry();
+  pGeo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  pGeo.setAttribute('aSize',    new THREE.BufferAttribute(sizes, 1));
+
+  const pMat = new THREE.ShaderMaterial({
+    transparent: true,
+    depthWrite: false,
+    uniforms: { uTime: { value: 0 } },
+    vertexShader:
+      'attribute float aSize;' +
+      'varying float vAlpha;' +
+      'uniform float uTime;' +
+      'void main(){' +
+        'vec4 mv = modelViewMatrix * vec4(position, 1.0);' +
+        'gl_PointSize = aSize * (320.0 / -mv.z);' +
+        'vAlpha = 0.45 + 0.35 * sin(uTime * 0.6 + position.x * 0.3 + position.y * 0.2);' +
+        'gl_Position = projectionMatrix * mv;' +
+      '}',
+    fragmentShader:
+      'varying float vAlpha;' +
+      'void main(){' +
+        'float d = distance(gl_PointCoord, vec2(0.5));' +
+        'float a = smoothstep(0.5, 0.0, d) * vAlpha;' +
+        'gl_FragColor = vec4(0.78, 0.92, 0.55, a);' +
+      '}'
+  });
+  const particles = new THREE.Points(pGeo, pMat);
+  scene.add(particles);
+
+  // Grid floor (subtle)
+  const grid = new THREE.GridHelper(60, 40, 0x1d3a14, 0x0c1d0a);
+  grid.position.y = -2.2;
+  grid.material.transparent = true;
+  grid.material.opacity = 0.32;
+  scene.add(grid);
+
+  // Floor reflection (mirrored translucent copy of truck)
+  function makeReflection(){
+    const geo = new THREE.PlaneGeometry(1, 1, 1, 1);
+    const mat = new THREE.MeshBasicMaterial({ transparent: true, depthWrite: false, opacity: 0.22 });
+    const m = new THREE.Mesh(geo, mat);
+    m.scale.y = -1;  // flip vertically
+    return m;
+  }
+  const refA = makeReflection();
+  const refB = makeReflection();
+  refA.material.map = textures[0];
+  refB.material.map = textures[1];
+  refB.material.opacity = 0;
+  scene.add(refA, refB);
+
+  // ---- Resize ----
+  function resize(){
+    const w = sticky.clientWidth, h = sticky.clientHeight;
+    renderer.setSize(w, h, false);
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  // ---- Scroll progress ----
+  function getProgress(){
+    const rect = wrap.getBoundingClientRect();
+    const total = wrap.offsetHeight - window.innerHeight;
+    if (total <= 0) return 0;
+    let p = -rect.top / total;
+    if (p < 0) p = 0; else if (p > 1) p = 1;
+    return p;
+  }
+
+  function smoothstep(a, b, x){
+    if (b <= a) return x < a ? 0 : 1;
+    let t = (x - a) / (b - a);
+    if (t < 0) t = 0; else if (t > 1) t = 1;
+    return t * t * (3 - 2 * t);
+  }
+
+  function actOpacity(p, r){
+    if (p < r.in)  return 0;
+    if (p < r.hold) return smoothstep(r.in, r.hold, p);
+    const fadeStart = Math.max(r.hold, r.out - 0.030);
+    if (p < fadeStart) return 1;
+    if (p < r.out)     return 1 - smoothstep(fadeStart, r.out, p);
+    return 0;
+  }
+  function actY(p, r){
+    if (p < r.in)  return 30;
+    if (p < r.hold) return 30 * (1 - smoothstep(r.in, r.hold, p));
+    const fadeStart = Math.max(r.hold, r.out - 0.030);
+    if (p < fadeStart) return 0;
+    if (p < r.out)     return -20 * smoothstep(fadeStart, r.out, p);
+    return -20;
+  }
+
+  // Mark loader hidden once first texture is ready
+  let firstReady = false;
+  textures[0].onUpdate = function(){
+    if (firstReady) return;
+    firstReady = true;
+    sizePlane(planeA, textures[0]);
+    sizePlane(refA,   textures[0]);
+    requestAnimationFrame(function(){ loader.classList.add('is-ready'); });
+  };
+  // Fallback: hide loader after 4s no matter what
+  setTimeout(function(){ if (!firstReady) loader.classList.add('is-ready'); }, 4000);
+
+  // ---- Main loop ----
+  const N_TEX = textures.length;
+  const startTime = performance.now();
+
+  function tick(){
+    const now = (performance.now() - startTime) * 0.001;
+    const p = getProgress();
+
+    // Crossfade phase (0..N-1)
+    const phase = p * (N_TEX - 1);
+    const i = Math.min(N_TEX - 2, Math.floor(phase));
+    const t = Math.min(1, Math.max(0, phase - i));
+    const tSmooth = t * t * (3 - 2 * t);  // smoothstep
+
+    if (planeA.material.map !== textures[i]) {
+      planeA.material.map = textures[i];
+      planeA.material.needsUpdate = true;
+      sizePlane(planeA, textures[i]);
+      refA.material.map = textures[i];
+      refA.material.needsUpdate = true;
+      sizePlane(refA, textures[i]);
+    }
+    if (planeB.material.map !== textures[i+1]) {
+      planeB.material.map = textures[i+1];
+      planeB.material.needsUpdate = true;
+      sizePlane(planeB, textures[i+1]);
+      refB.material.map = textures[i+1];
+      refB.material.needsUpdate = true;
+      sizePlane(refB, textures[i+1]);
+    }
+    planeA.material.opacity = 1 - tSmooth;
+    planeB.material.opacity = tSmooth;
+    refA.material.opacity   = (1 - tSmooth) * 0.22;
+    refB.material.opacity   = tSmooth * 0.22;
+
+    // Position reflections under each truck
+    const yShiftA = -planeA.scale.y * 0.5 - planeA.scale.y * 0.5; // below the plane
+    const yShiftB = -planeB.scale.y * 0.5 - planeB.scale.y * 0.5;
+    refA.position.set(planeA.position.x, yShiftA + 0.02, planeA.position.z - 0.01);
+    refB.position.set(planeB.position.x, yShiftB + 0.02, planeB.position.z - 0.01);
+
+    // "Rotation hint" — slight horizontal swing during crossfade
+    planeA.position.x = -tSmooth * 0.35;
+    planeB.position.x =  (1 - tSmooth) * 0.35;
+    planeA.rotation.y = -tSmooth * 0.12;
+    planeB.rotation.y =  (1 - tSmooth) * 0.12;
+
+    // Camera: subtle dolly + horizontal drift, looks like an orbit
+    const camRadius = 5.6 + Math.sin(p * Math.PI) * (-0.6);
+    const camAngle  = (p - 0.5) * 0.5;  // -0.25..0.25 rad
+    camera.position.x = Math.sin(camAngle) * camRadius;
+    camera.position.z = Math.cos(camAngle) * camRadius;
+    camera.position.y = Math.sin(p * Math.PI * 0.5) * 0.25 - 0.1;
+    camera.lookAt(0, 0, 0);
+
+    // Glow follows truck horizontally, pulses with breath
+    glow.position.x = (planeA.position.x * (1-tSmooth) + planeB.position.x * tSmooth);
+    glow.material.uniforms.uIntensity.value = 0.30 + Math.sin(now * 0.9) * 0.06;
+
+    // Particles slow drift
+    particles.rotation.y = now * 0.02;
+    pMat.uniforms.uTime.value = now;
+
+    // Grid breathing
+    grid.material.opacity = 0.20 + Math.sin(now * 0.5) * 0.04;
+
+    // Act fade
+    let activeP = p;
+    for (let k = 0; k < acts.length; k++){
+      const r = ACT_RANGES[k];
+      const op = actOpacity(activeP, r);
+      const yo = actY(activeP, r);
+      acts[k].style.opacity   = op.toFixed(3);
+      acts[k].style.transform = 'translateY(' + yo.toFixed(1) + 'px)';
+      acts[k].style.pointerEvents = op > 0.5 ? 'auto' : 'none';
+    }
+
+    if (progEl) progEl.style.width = (p * 100).toFixed(2) + '%';
+
+    renderer.render(scene, camera);
+    requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+})();
+</script>
