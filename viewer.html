@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>TripoSR truck GLB previews</title>
+<style>
+  body { margin: 0; background: #0a0a0a; color: #eee; font: 14px/1.5 system-ui, sans-serif; }
+  h1 { text-align: center; padding: 18px; margin: 0; font-weight: 500; letter-spacing: 0.04em; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(420px, 1fr)); gap: 16px; padding: 16px; }
+  .card { background: #111; border-radius: 12px; overflow: hidden; }
+  .card h2 { margin: 0; padding: 12px 16px; font-size: 14px; font-weight: 500; color: #A4D147; letter-spacing: 0.12em; text-transform: uppercase; border-bottom: 1px solid #222; }
+  model-viewer { width: 100%; height: 360px; background: linear-gradient(180deg, #050810, #000); --poster-color: transparent; }
+  p.hint { padding: 8px 16px 12px; color: #888; font-size: 12px; margin: 0; }
+</style>
+</head>
+<body>
+<h1>TripoSR previews &mdash; drag to rotate</h1>
+<div class="grid">
+  <div class="card">
+    <h2>From front-quarter photo</h2>
+    <model-viewer src="glb-attempts/truck-front-quarter.glb" camera-controls auto-rotate auto-rotate-delay="800" exposure="1.05" shadow-intensity="0.6" environment-image="neutral"></model-viewer>
+    <p class="hint">Generated from 02-front-quarter.webp</p>
+  </div>
+  <div class="card">
+    <h2>From rear-quarter photo</h2>
+    <model-viewer src="glb-attempts/truck-rear-quarter.glb" camera-controls auto-rotate auto-rotate-delay="800" exposure="1.05" shadow-intensity="0.6" environment-image="neutral"></model-viewer>
+    <p class="hint">Generated from 05-rear-quarter.webp</p>
+  </div>
+  <div class="card">
+    <h2>From side photo</h2>
+    <model-viewer src="glb-attempts/truck-side.glb" camera-controls auto-rotate auto-rotate-delay="800" exposure="1.05" shadow-intensity="0.6" environment-image="neutral"></model-viewer>
+    <p class="hint">Generated from 03-side.webp</p>
+  </div>
+</div>
+<script type="module" src="https://cdn.jsdelivr.net/npm/@google/model-viewer@4.0.0/dist/model-viewer.min.js"></script>
+</body>
+</html>
